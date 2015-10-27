@@ -191,19 +191,31 @@ def getVMPaths(path):
             vm_paths.append(p)
     return vm_paths
 
-def getStrippedFilename(filename):
-    result = ''
-    reversed = filename[::-1]
-    if reversed[0] == "/":
-        reversed = reversed[:-1]
-        result = re.findall("([^/]+)", reversed)[0][::-1]
-    elif "." in reversed:
-        reversed = re.findall("([^/]+)", reversed)[1]
-        result = reversed[::-1]
-    else:
-        result = re.findall("([^/]+)", reversed)[0][::-1]
-    print "stripped_filename: " + result
-    return result
+def getStrippedFilenameAndPath(filename):
+    stripped_filename = ''
+    path = ''
+
+    if filename[-1] == '/': # remove trailing /
+        filename = filename[:-1]
+
+    arr = filename.split('/')
+
+    last_entry_contains_dot = arr[-1].find('.')
+    if last_entry_contains_dot == -1: # dir without file
+        stripped_filename = arr[-1]
+        path = '/'.join(arr) + '/'
+
+    elif len(arr) == 1: # just file hat.vm
+        split_on_dot = arr[0].split('.')
+        stripped_filename = split_on_dot[0]
+        path = ''
+    else: #dir with file
+        split_on_dot = arr[-1].split('.')
+        stripped_filename = split_on_dot[0]
+        path_without_file = arr[:-1]
+        path = '/'.join(path_without_file) + '/'
+
+    return (stripped_filename, path)
 
 def main(filenameOrDir):
     if filenameOrDir[-3:] != ".vm":
@@ -213,9 +225,8 @@ def main(filenameOrDir):
     if vm_paths == []:
         print "invalid input: " + filenameOrDir
         return
-    stripped_filename = getStrippedFilename(vm_paths[0])
-    asm_filename = stripped_filename + '.asm'
-    print asm_filename
+    (stripped_filename, path) = getStrippedFilenameAndPath(vm_paths[0])
+    asm_filename = path + stripped_filename + '.asm'
     asm = file(asm_filename, 'w')
     result = []
 
