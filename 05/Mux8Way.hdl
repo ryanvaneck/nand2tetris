@@ -1,0 +1,56 @@
+CHIP Mux8Way {
+
+  IN a,b,c,d,e,f,g,h,sel[3];
+
+  OUT out;
+
+  PARTS:
+
+  Not(in=sel[0], out=not0);
+  Not(in=sel[1], out=not1);
+  Not(in=sel[2], out=not2);
+
+  And(a=a,  b=not0, out=a1);
+  And(a=a1, b=not1, out=a2);
+  And(a=a2, b=not2, out=a3);
+
+  And(a=b,  b=sel[0], out=b1);
+  And(a=b1, b=not1, out=b2);
+  And(a=b2, b=not2, out=b3);
+
+  And(a=c,  b=not0, out=c1);
+  And(a=c1, b=sel[1], out=c2);
+  And(a=c2, b=not2, out=c3);
+
+  And(a=d,  b=not0, out=d1);
+  And(a=d1, b=sel[1], out=d2);
+  And(a=d2, b=sel[2], out=d3);
+
+  And(a=e,  b=not0, out=e1);
+  And(a=e1, b=sel[1], out=e2);
+  And(a=e2, b=sel[2], out=e3);
+
+  And(a=f,  b=sel[0], out=f1);
+  And(a=f1, b=not1, out=f2);
+  And(a=f2, b=sel[2], out=f3);
+
+  And(a=g,  b=not0, out=g1);
+  And(a=g1, b=sel[1], out=g2);
+  And(a=g2, b=sel[2], out=g3);
+
+  And(a=h,  b=sel[0], out=h1);
+  And(a=h1, b=sel[1], out=h2);
+  And(a=h2, b=sel[2], out=h3);
+
+  Or8Way(in[0]=a3, in[1]=b3, in[2]=c3, in[3]=d3, in[4]=e3, in[5]=f3, in[6]=g3, in[7]=h3, out=out);
+}
+/*
+000 a
+001 b
+010 c
+011 d
+100 e
+101 f
+110 g
+111 h
+*/

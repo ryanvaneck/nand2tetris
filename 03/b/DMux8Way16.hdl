@@ -1,0 +1,48 @@
+CHIP DMux8Way16 {
+    IN in[16], sel[3];
+    OUT a[16], b[16], c[16], d[16], e[16], f[16], g[16], h[16];
+
+    PARTS:
+    Not(in=sel[0], out=not0);
+    Not(in=sel[1], out=not1);
+    Not(in=sel[2], out=not2);
+    
+    And16( a[0]=true, b[0]=not0,a[1]=true, b[1]=not0,a[2]=true, b[2]=not0,a[3]=true, b[3]=not0,a[4]=true, b[4]=not0,a[5]=true, b[5]=not0,a[6]=true, b[6]=not0,a[7]=true, b[7]=not0,a[8]=true, b[8]=not0,a[9]=true, b[9]=not0,a[10]=true, b[10]=not0,a[11]=true, b[11]=not0,a[12]=true, b[12]=not0,a[13]=true, b[13]=not0,a[14]=true, b[14]=not0,a[15]=true, b[15]=not0, out=not160);
+    And16( a[0]=true, b[0]=not1,a[1]=true, b[1]=not1,a[2]=true, b[2]=not1,a[3]=true, b[3]=not1,a[4]=true, b[4]=not1,a[5]=true, b[5]=not1,a[6]=true, b[6]=not1,a[7]=true, b[7]=not1,a[8]=true, b[8]=not1,a[9]=true, b[9]=not1,a[10]=true, b[10]=not1,a[11]=true, b[11]=not1,a[12]=true, b[12]=not1,a[13]=true, b[13]=not1,a[14]=true, b[14]=not1,a[15]=true, b[15]=not1, out=not161);
+    And16( a[0]=true, b[0]=not2, a[1]=true, b[1]=not2, a[2]=true, b[2]=not2, a[3]=true, b[3]=not2, a[4]=true, b[4]=not2, a[5]=true, b[5]=not2, a[6]=true, b[6]=not2, a[7]=true, b[7]=not2, a[8]=true, b[8]=not2, a[9]=true, b[9]=not2, a[10]=true, b[10]=not2, a[11]=true, b[11]=not2, a[12]=true, b[12]=not2, a[13]=true, b[13]=not2, a[14]=true, b[14]=not2, a[15]=true, b[15]=not2, out=not162);
+    And16( a[0]=true, b[0]=sel[0], a[1]=true, b[1]=sel[0], a[2]=true, b[2]=sel[0], a[3]=true, b[3]=sel[0], a[4]=true, b[4]=sel[0], a[5]=true, b[5]=sel[0], a[6]=true, b[6]=sel[0], a[7]=true, b[7]=sel[0], a[8]=true, b[8]=sel[0], a[9]=true, b[9]=sel[0], a[10]=true, b[10]=sel[0], a[11]=true, b[11]=sel[0], a[12]=true, b[12]=sel[0], a[13]=true, b[13]=sel[0], a[14]=true, b[14]=sel[0], a[15]=true, b[15]=sel[0], out=sel160);
+    And16( a[0]=true, b[0]=sel[1], a[1]=true, b[1]=sel[1], a[2]=true, b[2]=sel[1], a[3]=true, b[3]=sel[1], a[4]=true, b[4]=sel[1], a[5]=true, b[5]=sel[1], a[6]=true, b[6]=sel[1], a[7]=true, b[7]=sel[1], a[8]=true, b[8]=sel[1], a[9]=true, b[9]=sel[1], a[10]=true, b[10]=sel[1], a[11]=true, b[11]=sel[1], a[12]=true, b[12]=sel[1], a[13]=true, b[13]=sel[1], a[14]=true, b[14]=sel[1], a[15]=true, b[15]=sel[1], out=sel161);
+    And16( a[0]=true, b[0]=sel[2], a[1]=true, b[1]=sel[2], a[2]=true, b[2]=sel[2], a[3]=true, b[3]=sel[2], a[4]=true, b[4]=sel[2], a[5]=true, b[5]=sel[2], a[6]=true, b[6]=sel[2], a[7]=true, b[7]=sel[2], a[8]=true, b[8]=sel[2], a[9]=true, b[9]=sel[2], a[10]=true, b[10]=sel[2], a[11]=true, b[11]=sel[2], a[12]=true, b[12]=sel[2], a[13]=true, b[13]=sel[2], a[14]=true, b[14]=sel[2], a[15]=true, b[15]=sel[2], out=sel162);
+
+    And16(a=in, b=not160, out=w1);
+    And16(a=w1, b=not161, out=x1);
+    And16(a=x1, b=not162, out=a);
+
+    And16(a=in, b=sel160, out=w2);
+    And16(a=w2, b=not161, out=x2);
+    And16(a=x2, b=not162, out=b);
+
+    And16(a=in, b=not160, out=w3);
+    And16(a=w3, b=sel161, out=x3);
+    And16(a=x3, b=not162, out=c);
+
+    And16(a=in, b=sel160, out=w4);
+    And16(a=w4, b=sel161, out=x4);
+    And16(a=x4, b=not162, out=d);
+
+    And16(a=in, b=not160, out=w5);
+    And16(a=w5, b=not161, out=x5);
+    And16(a=x5, b=sel162, out=e);
+
+    And16(a=in, b=sel160, out=w6);
+    And16(a=w6, b=not161, out=x6);
+    And16(a=x6, b=sel162, out=f);
+
+    And16(a=in, b=not160, out=w7);
+    And16(a=w7, b=sel161, out=x7);
+    And16(a=x7, b=sel162, out=g);
+
+    And16(a=in, b=sel160, out=w8);
+    And16(a=w8, b=sel161, out=x8);
+    And16(a=x8, b=sel162, out=h);
+}
