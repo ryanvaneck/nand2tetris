@@ -155,11 +155,14 @@ def translatePushPop(commandType, segment, index, stripped_filename):
             result += ['@SP','A=M','M=D','@SP','M=M+1']
 
         elif segment == C_LABEL:
-            pass
+            return ['(' + segment + ')']
+
         elif segment == C_GOTO:
-            pass
+            return ['@'+ segment, '0;JMP']
+
         elif segment == C_IF:
-            pass
+            result = ['@SP', 'M=M-1', 'A=M','D=M'] #pop top of stack to D
+            result += ['@' + segment, 'D;JGT'] #goto segment if D > 0
 
 
     else: #POP
@@ -217,6 +220,14 @@ def getStrippedFilenameAndPath(filename):
 
     return (stripped_filename, path)
 
+def getBootstrap():
+    bootstrap = ['@0','M=256']
+    bootstrap += ['@1','M=300']
+    bootstrap += ['@2','M=400']
+    bootstrap += ['@3','M=3000']
+    bootstrap += ['@4','M=3010']
+    return bootstrap
+
 def main(filenameOrDir):
     if filenameOrDir[-3:] != ".vm":
         vm_paths = getVMPaths(filenameOrDir)
@@ -228,7 +239,7 @@ def main(filenameOrDir):
     (stripped_filename, path) = getStrippedFilenameAndPath(vm_paths[0])
     asm_filename = path + stripped_filename + '.asm'
     asm = file(asm_filename, 'w')
-    result = []
+    result = getBootstrap()
 
     for vm_file in vm_paths:
         for line in file(vm_file, 'r'):
