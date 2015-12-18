@@ -17,7 +17,7 @@ C_POP =  'pop'
 
 C_LABEL =     'label'
 C_GOTO =      'goto'
-C_IF =   'if-goto'
+C_IF =        'if-goto'
 C_FUNCTION =  'function'
 C_RETURN =    'return'
 C_CALL =      'call'
@@ -55,24 +55,32 @@ contJumpCount = 0
 def getValidCommand(line):
     stripped = line.strip()
     if stripped[0:2] == "//" or stripped == "":
+        #print "returning None for: " + stripped
         return None
     else:
         return stripped
 
 def getCommandType(command):
-    firstWord = re.match("(\w+)",command).groups(1)[0]
+    firstWord = re.match("([a-z-]+)",command).groups(1)[0]
     if firstWord in ARTH_COMMANDS:
         return C_ARTH
     return firstWord
 
 
 def getArg1(command):
-    return re.findall("(\w+)", command)[1]
+    args = re.findall("([A-Za-z_.0-9-]+)", command)
+    if len(args) > 1:
+        return args[1]
 
 def getArg2(command):
-    arg = re.findall("(\w+)", command)[2]
-    if arg:
-        return int(arg)
+    args = re.findall("([A-Za-z_.0-9-]+)", command)
+    if len(args) > 2:
+        try:
+            return int(args[2])
+        except Exception:
+            return args[2]
+    else:
+        return None
 
 def getNextCompJump():
     global compJumpCount
@@ -126,9 +134,7 @@ def translatePushPop(commandType, segment, index, stripped_filename):
     if commandType == C_PUSH:
 
         if segment == SEG_CONST:
-            result.append("@"+ str(index))
-            result.append('D=A')
-            result += ['@SP','A=M','M=D','@SP','M=M+1']
+            result += pushConstant(index)
 
         elif segment in [SEG_LOCAL, SEG_ARG, SEG_THIS, SEG_THAT]:
             #take indexth from seg and push it onto stack
@@ -154,17 +160,6 @@ def translatePushPop(commandType, segment, index, stripped_filename):
             result.append('D=M')
             result += ['@SP','A=M','M=D','@SP','M=M+1']
 
-        elif segment == C_LABEL:
-            return ['(' + segment + ')']
-
-        elif segment == C_GOTO:
-            return ['@'+ segment, '0;JMP']
-
-        elif segment == C_IF:
-            result = ['@SP', 'M=M-1', 'A=M','D=M'] #pop top of stack to D
-            result += ['@' + segment, 'D;JGT'] #goto segment if D > 0
-
-
     else: #POP
         result += ['@SP','M=M-1','A=M','D=M']
         result.append(translateSegment(segment, index, stripped_filename))
@@ -174,6 +169,46 @@ def translatePushPop(commandType, segment, index, stripped_filename):
                 result.append('A=A+1')
         result.append('M=D')
 
+    return result
+
+
+def translateFlow(commandType, segment, index, current_function):
+
+    if commandType == C_LABEL:
+        if current_function:
+            return ['(' + current_function + '$' + segment + ')']
+        return ['(' + segment + ')']
+
+    elif commandType == C_GOTO:
+        return ['@'+ segment, '0;JMP']
+
+    elif commandType == C_IF:
+        result = ['@SP', 'M=M-1', 'A=M','D=M'] #pop top of stack to D
+        result += ['@' + segment, 'D;JGT'] #goto segment if D > 0
+        return result
+
+def translateFunction(commandType, segment, index):
+    result = []
+
+    if commandType == C_FUNCTION:
+        result.append('(' + segment + ')')
+        for i in range(index):
+            result += pushConstant(0)
+
+    if commandType == C_CALL:
+        #push return-address
+        pass
+
+    if commandType == C_RETURN:
+       pass
+
+    return result
+
+def pushConstant(constant):
+    result = []
+    result.append("@"+ str(constant))
+    result.append('D=A')
+    result += ['@SP','A=M','M=D','@SP','M=M+1']
     return result
 
 def translateSegment(segment, index, stripped_filename):
@@ -221,11 +256,12 @@ def getStrippedFilenameAndPath(filename):
     return (stripped_filename, path)
 
 def getBootstrap():
-    bootstrap = ['@0','M=256']
-    bootstrap += ['@1','M=300']
-    bootstrap += ['@2','M=400']
-    bootstrap += ['@3','M=3000']
-    bootstrap += ['@4','M=3010']
+    bootstrap = ['@256','D=A']
+    bootstrap += ['@SP','M=D']
+    #bootstrap += ['@1','M=300']
+    #bootstrap += ['@2','M=400']
+    #bootstrap += ['@3','M=3000']
+    #bootstrap += ['@4','M=3010']
     return bootstrap
 
 def main(filenameOrDir):
@@ -239,21 +275,37 @@ def main(filenameOrDir):
     (stripped_filename, path) = getStrippedFilenameAndPath(vm_paths[0])
     asm_filename = path + stripped_filename + '.asm'
     asm = file(asm_filename, 'w')
-    result = getBootstrap()
+    result = [] #getBootstrap()
+
+    CURRENT_FUNCTION = None
 
     for vm_file in vm_paths:
         for line in file(vm_file, 'r'):
+            #print line
             validCommand = getValidCommand(line)
-
+            #print validCommand
             if validCommand:
+                print "validCommand: " + validCommand
                 result.append("//" + validCommand)
                 commandType = getCommandType(validCommand)
+                print "commandType: " + commandType
 
                 if commandType == C_ARTH:
                     result += translateArth(validCommand, commandType)
 
-                if commandType in [C_PUSH,C_POP]:
+                elif commandType in [C_PUSH,C_POP]:
                     result += translatePushPop(commandType, getArg1(validCommand), getArg2(validCommand), stripped_filename)
+
+                elif commandType in [C_LABEL, C_IF, C_GOTO]:
+                    result += translateFlow(commandType, getArg1(validCommand), getArg2(validCommand), CURRENT_FUNCTION)
+
+                elif commandType in [C_FUNCTION, C_CALL, C_RETURN]:
+                    if commandType == C_FUNCTION:
+                        CURRENT_FUNCTION = getArg1(validCommand)
+                    elif commandType == C_RETURN:
+                        CURRENT_FUNCTION = None
+
+                    result += translateFunction(commandType, getArg1(validCommand), getArg2(validCommand))
 
     for item in result:
         print>>asm, item
